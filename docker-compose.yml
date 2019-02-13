@@ -138,6 +138,9 @@ services:
     volumes:
       - ${pathToCrawl}:/usr/data
 
+volumes:
+    volume-name:
+    driver: local  # is already local by default
 
   
   
