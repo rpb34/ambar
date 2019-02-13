@@ -1,4 +1,4 @@
-version: "2.1"
+version: "1.11.1"
 networks:
   internal_network:
 services:      
@@ -44,7 +44,7 @@ services:
       - "15672"
       - "5672"   
     volumes:
-      -/rabbit:/var/lib/rabbitmq:
+      -/rabbit:/var/lib/rabbitmq
   redis:
     restart: always
     sysctls:
