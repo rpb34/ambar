@@ -138,5 +138,10 @@ services:
     volumes:
       - ${pathToCrawl}:/usr/dat .
 
+  volumes:
+    db-data:
+  networks:
+    overlay:
+
   
   
