@@ -123,7 +123,7 @@ services:
       - id=0
       - api_url=http://serviceapi:8081
       - rabbit_host=amqp://rabbit
-  ${crawlerName}:
+  abc:
     depends_on: 
       serviceapi: 
         condition: service_healthy 
@@ -134,7 +134,7 @@ services:
     expose:
       - "8082"
     environment:      
-      - name=${crawlerName}
+      - name=abc
     volumes:
       - ${pathToCrawl}:/usr/data
 
