@@ -140,7 +140,7 @@ services:
 
 volumes:
     volume-name:
-    driver: local  # is already local by default
+    driver: db:/data/db
 
   
   
