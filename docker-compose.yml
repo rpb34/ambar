@@ -10,7 +10,7 @@ services:
     environment:
       - cacheSizeGB=2
     volumes:
-      - db:/data/db
+      - db:/data/db:
     expose:
       - "27017"   
   es:
@@ -33,7 +33,7 @@ services:
     cap_add:
       - IPC_LOCK
     volumes:
-      - es:/usr/share/elasticsearch/data
+      - es:/usr/share/elasticsearch/data:
   rabbit:
     restart: always
     networks:
@@ -44,7 +44,7 @@ services:
       - "15672"
       - "5672"   
     volumes:
-      - rabbit:/var/lib/rabbitmq
+      - rabbit:/var/lib/rabbitmq:
   redis:
     restart: always
     sysctls:
@@ -136,11 +136,11 @@ services:
     environment:      
       - name=abc
     volumes:
-      - ${pathToCrawl}:/usr/data
+      - ${pathToCrawl}:/usr/data:
 
 volumes:
     volume-name:
-    driver: db:/data/db
+    driver: db:/data/db:
 
   
   
