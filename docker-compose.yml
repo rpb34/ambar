@@ -1,104 +1,28 @@
-version: "2"
+version: "2.2"
 networks:
   internal_network:
-services:
-  webapi:
-    restart: always
-    networks:
-      - internal_network
-    image: ambar/ambar-webapi:latest
-    expose:
-      - "8080"
-    environment:
-      - dockerRepo=ambar
-      - db=mongodb://db:27017/ambar_data
-      - fe=http://10.20.31.103:80
-      - api=http://webapi:8080
-      - es=http://es:9200
-      - redis=webapi-cache
-      - rabbit=amqp://rabbit
-      - mode=ce
-      - pipelineCount=1
-      - crawlerCount=1
-      - dropboxClientId=
-      - dropboxRedirectUri=
-      - defaultLangAnalyzer=ambar_en
-      - analyticsToken=cda4b0bb11a1f32aed7564b08c455992
-      - auth=basic
-      - ocrPdfMaxPageCount=5000
-      - ocrPdfSymbolsPerPageThreshold=100
-      - showFilePreview=false
-    depends_on:
-      - db
-      - es
-      - webapi-cache
-      - proxy
-      - rabbit
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-  webapi-cache:
-    restart: always
-    image: redis:alpine   
-    networks:
-      - internal_network    
-    expose:
-      - "6379"
-    ports:
-      - "6379:6379" 
-    mem_limit: 1g 
-  proxy:
-    image: ambar/ambar-proxy:latest
-    networks:
-      - internal_network
-    restart: always
-    environment:
-      - API_EXT_PORT=80
-      - FE_EXT_PORT=80
-    expose:
-      - 80
-      
-    ports:
-      - "80:80"
-      
-  frontend:
-    image: ambar/ambar-frontend:latest
-    networks:
-      - internal_network
-    depends_on:
-      - webapi
-    expose:
-      - "80"
-    restart: always
-    environment:
-      - api=http://:80
+services:      
   db:
     restart: always
-    image: ambar/ambar-mongodb:latest
     networks:
       - internal_network
+    image: ambar/ambar-mongodb:latest
     environment:
       - cacheSizeGB=2
     volumes:
-      - /opt/ambar/db:/data/db
+      - db:/data/db .
     expose:
-      - "27017"
-    ports:
-      - "27017:27017"
+      - "27017"   
   es:
-    image: ambar/ambar-es:latest
+    restart: always
     networks:
       - internal_network
-    restart: always
+    image: ambar/ambar-es:latest
     expose:
-      - "9200"
-    ports:
-      - "9200:9200"
+      - "9200" 
     environment:
       - cluster.name=ambar-es
-      - bootstrap.memory_lock=true
-      - xpack.security.enabled=false
-      - security.manager.enabled=false
-      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
     ulimits:
       memlock:
         soft: -1
@@ -106,21 +30,114 @@ services:
       nofile:
         soft: 65536
         hard: 65536
-    mem_limit: 2g
     cap_add:
       - IPC_LOCK
     volumes:
-      - /opt/ambar/es:/usr/share/elasticsearch/data
+      - es:/usr/share/elasticsearch/data .
   rabbit:
-    image: ambar/ambar-rabbit:latest
+    restart: always
     networks:
       - internal_network
+    image: ambar/ambar-rabbit:latest
     hostname: rabbit
     expose:
       - "15672"
-      - "5672"
-    ports:
-      - "15672:15672"
-      - "5672:5672"
+      - "5672"   
     volumes:
-      - /opt/ambar/rabbit:/var/lib/rabbitmq
+      - rabbit:/var/lib/rabbitmq .
+  redis:
+    restart: always
+    sysctls:
+      - net.core.somaxconn=1024
+    networks:
+      - internal_network
+    image: ambar/ambar-redis:latest
+    expose:
+      - "6379" 
+  serviceapi:
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbit:
+        condition: service_healthy
+      es:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - internal_network
+    image: ambar/ambar-serviceapi:latest
+    expose:
+      - "8081"  
+    environment:            
+      - mongoDbUrl=mongodb://db:27017/ambar_data
+      - elasticSearchUrl=http://es:9200
+      - redisHost=redis
+      - redisPort=6379
+      - rabbitHost=amqp://rabbit
+      - langAnalyzer=ambar_en   
+  webapi:
+    depends_on:
+      serviceapi:
+        condition: service_healthy
+    restart: always
+    networks:
+      - internal_network
+    image: ambar/ambar-webapi:latest
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    environment:            
+      - uiLang=en
+      - mongoDbUrl=mongodb://db:27017/ambar_data
+      - elasticSearchUrl=http://es:9200
+      - redisHost=redis
+      - redisPort=6379
+      - serviceApiUrl=http://serviceapi:8081
+      - rabbitHost=amqp://rabbit    
+  frontend:
+    depends_on:
+      webapi:
+        condition: service_healthy
+    image: ambar/ambar-frontend:latest
+    restart: always
+    networks:
+      - internal_network
+    ports:
+      - "80:80"
+    expose:
+      - "80"
+    environment:
+      - api=http://${ambarHostIpAddress}:8080  
+  pipeline0:
+    depends_on: 
+      serviceapi: 
+        condition: service_healthy                            
+    image: ambar/ambar-pipeline:latest
+    restart: always
+    networks:
+      - internal_network  
+    environment:                
+      - id=0
+      - api_url=http://serviceapi:8081
+      - rabbit_host=amqp://rabbit
+  abc:
+    depends_on: 
+      serviceapi: 
+        condition: service_healthy 
+    image: ambar/ambar-local-crawler
+    restart: always
+    networks:
+      - internal_network
+    expose:
+      - "8082"
+    environment:      
+      - name=abc
+    volumes:
+      - ${pathToCrawl}:/usr/dat .
+
+
+  
+  
