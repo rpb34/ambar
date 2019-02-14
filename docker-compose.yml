@@ -136,4 +136,4 @@ services:
     environment:      
       - name=abc
     volumes:
-      - ${pathToCrawl}:/usr/data
+      - .Volumes/crawl:/usr/data
