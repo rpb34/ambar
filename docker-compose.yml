@@ -10,7 +10,7 @@ services:
     environment:
       - cacheSizeGB=2
     volumes:
-      - /naman2407/try/db:/data/db
+      - ./Volumes/db:/data/db
     expose:
       - "27017"   
   es:
@@ -33,7 +33,7 @@ services:
     cap_add:
       - IPC_LOCK
     volumes:
-      - /naman2407/try/es:/usr/share/elasticsearch/data
+      - ./Volumes/es:/usr/share/elasticsearch/data
   rabbit:
     restart: always
     networks:
@@ -44,7 +44,7 @@ services:
       - "15672"
       - "5672"   
     volumes:
-      - /naman2407/try/rabbit:/var/lib/rabbitmq
+      -  ./Volumes/rabbit:/var/lib/rabbitmq
   redis:
     restart: always
     sysctls:
@@ -110,7 +110,7 @@ services:
     expose:
       - "80"
     environment:
-      - api=http://34.73.128.30:8080  
+      - api=http://:8080  
   pipeline0:
     depends_on: 
       serviceapi: 
