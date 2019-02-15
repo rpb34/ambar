@@ -110,7 +110,7 @@ services:
     expose:
       - "80"
     environment:
-      - api=http://35.192.44.209:8080  
+      - api=http://35.186.167.104:8080  
   pipeline0:
     depends_on: 
       serviceapi: 
